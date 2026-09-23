@@ -78,7 +78,7 @@ jobs:
           declare -A ABI_LABELS=( ["universal"]="universal-all-devices" ["armeabi-v7a"]="armv7-watch-32bit" ["arm64-v8a"]="arm64-phone-64bit" ["x86_64"]="x86_64-emulator" )
           # Just rename the generic app-release.apk if splits aren't enabled
           if [ -f "$OUTDIR/app-release.apk" ]; then
-            mv "$OUTDIR/app-release.apk" "$OUTDIR/VenomSense-v${VER}.apk"
+            mv "$OUTDIR/app-release.apk" "$OUTDIR/VenomSense-v${VER}-universal.apk"
           fi
           for ABI in "${!ABI_LABELS[@]}"; do
             SRC="$OUTDIR/app-${ABI}-release.apk"
