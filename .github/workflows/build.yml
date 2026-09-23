@@ -50,6 +50,8 @@ jobs:
           cd "VenomSense App"
           curl -sLO https://raw.githubusercontent.com/gradle/gradle/master/gradlew
           chmod +x ./gradlew
+          mkdir -p gradle/wrapper
+          curl -sL https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
       - name: Bump version
         run: |
           cd "VenomSense App"
