@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -17,10 +20,10 @@ android {
 
     signingConfigs {
         create("release") {
-            val props = java.util.Properties()
+            val props = Properties()
             val propsFile = rootProject.file("local.properties")
             if (propsFile.exists()) {
-                props.load(java.io.FileInputStream(propsFile))
+                props.load(FileInputStream(propsFile))
                 storeFile = file(props.getProperty("signing.storeFile", "signing-key.jks"))
                 storePassword = props.getProperty("signing.storePassword")
                 keyAlias = props.getProperty("signing.keyAlias")
