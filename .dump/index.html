@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VenomSense</title>
+<link rel="stylesheet" href="css/all.min.css">
+<style>
+/* ========================================= */
+/*  RESET & BASE                             */
+/* ========================================= */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Roboto,'Helvetica Neue',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  user-select:none;
+  background-image:radial-gradient(circle at 50% -10%, var(--primary-glow) 0%, transparent 60%);
+  background-attachment:fixed;
+  transition:background 0.5s ease;
+}
+
+/* ========================================= */
+/*  CSS VARIABLES (GLASS & PREMIUM)          */
+/* ========================================= */
+:root{
+  --bg:#070a13;
+  --surface:rgba(20, 25, 40, 0.6);
+  --surface-alt:rgba(255, 255, 255, 0.02);
+  --border:rgba(255, 255, 255, 0.08);
+  --border-light:rgba(255, 255, 255, 0.15);
+  --primary:#00A996;
+  --primary-glow:rgba(0, 169, 150, 0.35);
+  --primary-dim:rgba(0, 169, 150, 0.15);
+  --danger:#ff2a5f;
+  --danger-glow:rgba(255, 42, 95, 0.4);
+  --danger-dim:rgba(255, 42, 95, 0.15);
+  --safe:#00e676;
+  --safe-glow:rgba(0, 230, 118, 0.4);
+  --safe-dim:rgba(0, 230, 118, 0.15);
+  --warning:#ffb300;
+  --warning-dim:rgba(255, 179, 0, 0.15);
+  --text:#ffffff;
+  --text-sec:#94a3b8;
+  --text-dim:#475569;
+  --radius:24px;
+  --radius-sm:14px;
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+  --glass-blur:blur(16px);
+}
+
+.light-theme{
+  --bg:#f4f7f9;
+  --surface:rgba(255, 255, 255, 0.7);
+  --surface-alt:rgba(0, 0, 0, 0.02);
+  --border:rgba(0, 0, 0, 0.08);
+  --border-light:rgba(0, 0, 0, 0.15);
+  --text:#0f172a;
+  --text-sec:#64748b;
+  --text-dim:#94a3b8;
+  --primary-glow:rgba(0, 169, 150, 0.15);
+  --shadow:0 8px 32px rgba(0,0,0,0.05);
+}
+
+/* ========================================= */
+/*  LAYOUT & ANIMATIONS                      */
+/* ========================================= */
+.app-container{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.page-content{flex:1;overflow-y:auto;padding-bottom:180px;-webkit-overflow-scrolling:touch;}
+.page{display:none;}
+.page.active{display:block;animation:pageIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);}
+.page.active.slide-left{animation:slideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1);}
+.page.active.slide-right{animation:slideRight 0.5s cubic-bezier(0.16, 1, 0.3, 1);}
+@keyframes pageIn{from{opacity:0;transform:scale(0.98) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-40px);}to{opacity:1;transform:translateX(0);}}
+
+.glass-panel {
+  background:var(--surface);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+  border-radius:var(--radius);
+}
+
+/* ========================================= */
+/*  TOP BAR                                  */
+/* ========================================= */
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;
+  background:transparent;
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border-bottom:1px solid var(--primary-dim);
+  box-shadow:none;
+}
+.brand{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:800;letter-spacing:0.5px;}
+.brand i{color:var(--primary);font-size:22px;filter:drop-shadow(0 0 8px var(--primary-glow));}
+.connection-badge{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px;border-radius:30px;
+  font-size:12px;font-weight:700;
+  border:1px solid var(--border);
+  transition:all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.connection-badge.connected{background:var(--safe-dim);color:var(--safe);border-color:var(--safe-glow);box-shadow:0 0 15px var(--safe-dim);}
+.connection-badge.disconnected{background:var(--danger-dim);color:var(--danger);border-color:var(--danger-glow);}
+
+/* ========================================= */
+/*  DASHBOARD                                */
+/* ========================================= */
+.gauge-section{display:flex;flex-direction:column;align-items:center;padding:32px 20px 20px;}
+.gauge-wrapper{position:relative;width:240px;height:240px;margin-bottom:20px;}
+.gauge-svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,0.2));}
+.gauge-bg{fill:none;stroke:var(--border);stroke-width:16;stroke-linecap:round;}
+.gauge-fill{fill:none;stroke:var(--primary);stroke-width:16;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.5s ease;}
+.gauge-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.gauge-value{font-size:56px;font-weight:900;line-height:1;letter-spacing:-1px;text-shadow:0 4px 15px rgba(0,0,0,0.3);}
+.gauge-label{font-size:12px;color:var(--text-sec);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;}
+
+.status-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:12px 28px;
+  border-radius:30px;
+  font-size:14px;font-weight:800;letter-spacing:1px;
+  transition:all 0.4s ease;
+  border:1px solid var(--border);
+}
+.status-badge.safe{background:var(--safe-dim);color:var(--safe);border-color:var(--safe-glow);box-shadow:0 0 20px var(--safe-dim);}
+.status-badge.danger{background:var(--danger-dim);color:var(--danger);border-color:var(--danger-glow);box-shadow:0 0 20px var(--danger-dim);animation:pulseDanger 2s infinite;}
+.status-badge.warning{background:var(--warning-dim);color:var(--warning);border-color:var(--border);}
+.status-badge.idle{background:var(--surface);color:var(--text-sec);}
+@keyframes pulseDanger{0%,100%{box-shadow:0 0 20px var(--danger-dim);}50%{box-shadow:0 0 40px var(--danger-glow);}}
+
+/* Deep Scan Button */
+.deep-scan-btn{
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  width:calc(100% - 48px);max-width:400px;
+  margin:24px auto 16px;padding:20px;
+  background:linear-gradient(135deg, var(--primary), #00d2b8);
+  color:#fff;
+  border:none;border-radius:20px;
+  font-size:17px;font-weight:800;letter-spacing:0.5px;
+  cursor:pointer;outline:none;
+  box-shadow:0 8px 25px var(--primary-glow);
+  transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.deep-scan-btn::after{
+  content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation:sweep 3s infinite linear;
+}
+@keyframes sweep{0%{left:-100%;}50%,100%{left:200%;}}
+.deep-scan-btn:active{transform:scale(0.95);box-shadow:0 4px 15px var(--primary-glow);}
+.deep-scan-btn:disabled{background:var(--surface-alt);color:var(--text-dim);box-shadow:none;border:1px solid var(--border);cursor:not-allowed;}
+.deep-scan-btn:disabled::after{display:none;}
+
+/* Info Cards */
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+  gap:16px;padding:16px 24px;
+}
+.info-card{
+  background:var(--surface-alt);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:20px;
+  position:relative;overflow:hidden;
+  transition:all 0.3s ease;
+  animation:fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+.info-card:nth-child(1){animation-delay:0.1s;}
+.info-card:nth-child(2){animation-delay:0.2s;}
+.info-card:nth-child(3){animation-delay:0.3s;}
+.info-card:nth-child(4){animation-delay:0.4s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+
+.info-card::before{
+  content:'';position:absolute;top:0;left:0;width:30px;height:30px;
+  background:var(--primary-glow);filter:blur(20px);opacity:0.5;
+}
+.info-label{font-size:11px;color:var(--text-sec);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;}
+.info-value{font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+.info-card.full-width{grid-column:1/-1;}
+
+.rgb-bar{display:flex;gap:6px;margin-top:12px;height:8px;border-radius:4px;overflow:hidden;}
+.rgb-bar span{flex:1;border-radius:4px;transition:flex 0.5s cubic-bezier(0.16, 1, 0.3, 1);}
+
+/* ========================================= */
+/*  HISTORY                                  */
+/* ========================================= */
+.history-header{display:flex;align-items:center;justify-content:space-between;padding:24px 24px 12px;}
+.history-header h2{font-size:22px;font-weight:800;}
+.clear-btn{
+  display:flex;align-items:center;gap:8px;padding:10px 16px;
+  background:var(--surface-alt);border:1px solid var(--border);color:var(--text-sec);
+  border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;
+  transition:all 0.2s ease;
+}
+.clear-btn:active{background:var(--danger-dim);color:var(--danger);border-color:var(--danger-glow);}
+
+.history-list{padding:0 24px 24px;}
+.scan-entry{
+  display:flex;align-items:center;gap:16px;
+  background:var(--surface-alt);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:16px 20px;margin-bottom:12px;
+  animation:fadeUp 0.4s ease both;
+}
+.entry-icon{
+  width:48px;height:48px;display:flex;align-items:center;justify-content:center;
+  border-radius:16px;font-size:20px;flex-shrink:0;box-shadow:inset 0 0 10px rgba(0,0,0,0.1);
+}
+.danger-icon{background:var(--danger-dim);color:var(--danger);border:1px solid var(--danger-glow);}
+.safe-icon{background:var(--safe-dim);color:var(--safe);border:1px solid var(--safe-glow);}
+.deep-icon{background:var(--primary-dim);color:var(--primary);border:1px solid var(--primary-glow);}
+.entry-body{flex:1;min-width:0;}
+.entry-title{font-size:15px;font-weight:800;}
+.entry-sub{font-size:12px;color:var(--text-sec);margin-top:4px;font-weight:600;}
+.entry-percent{font-size:22px;font-weight:900;text-align:right;}
+.safe-text{color:var(--safe);text-shadow:0 0 10px var(--safe-glow);}
+.danger-text{color:var(--danger);text-shadow:0 0 10px var(--danger-glow);}
+
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 20px;color:var(--text-sec);text-align:center;
+}
+.empty-state i{font-size:56px;margin-bottom:20px;color:var(--border);filter:drop-shadow(0 4px 10px rgba(0,0,0,0.2));}
+.empty-state p{font-size:15px;font-weight:600;}
+
+/* ========================================= */
+/*  SETTINGS                                 */
+/* ========================================= */
+.settings-section{padding:24px;}
+.settings-section h2{font-size:22px;font-weight:800;margin-bottom:20px;}
+
+.setting-group{
+  background:var(--surface-alt);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;margin-bottom:20px;
+}
+.setting-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px;border-bottom:1px solid var(--border);
+}
+.setting-item:last-child{border-bottom:none;}
+.setting-item.no-border{border-bottom:none;padding-bottom:12px;}
+.setting-left{display:flex;align-items:center;gap:16px;flex:1;}
+.setting-left i{
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);color:var(--primary);border:1px solid var(--border);
+  border-radius:14px;font-size:18px;box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+.setting-title{font-size:15px;font-weight:700;}
+.setting-desc{font-size:12px;color:var(--text-sec);margin-top:2px;font-weight:600;}
+
+.custom-input-wrap{display:flex;gap:12px;padding:0 20px 20px;align-items:stretch;}
+.custom-input{
+  flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  padding:14px 16px;border-radius:12px;font-size:14px;font-weight:600;outline:none;
+  transition:all 0.3s ease;
+}
+.custom-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-dim);}
+.action-btn{
+  padding:14px 24px;border-radius:12px;border:none;font-size:14px;font-weight:800;
+  cursor:pointer;transition:all 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+.action-btn:active{transform:scale(0.94);}
+.action-btn.primary{background:var(--primary);color:#fff;box-shadow:0 4px 15px var(--primary-glow);}
+.action-btn.danger{background:var(--danger);color:#fff;box-shadow:0 4px 15px var(--danger-glow);}
+
+.custom-toggle{
+  position:relative;width:52px;height:30px;background:var(--bg);
+  border:1px solid var(--border);border-radius:15px;cursor:pointer;
+  transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.custom-toggle.active{background:var(--primary);border-color:var(--primary);}
+.custom-toggle::after{
+  content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;
+  background:#fff;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,0.2);
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.custom-toggle.active::after{transform:translateX(22px);}
+
+.device-info{background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:12px;}
+.device-info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--border);font-size:13px;}
+.device-info-row:last-child{border-bottom:none;}
+.device-info-row span:first-child{color:var(--text-sec);font-weight:600;}
+.device-info-row span:last-child{font-weight:800;}
+
+/* ========================================= */
+/*  FLOATING BOTTOM NAV                      */
+/* ========================================= */
+.bottom-nav{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  width:calc(100% - 48px);max-width:400px;height:72px;
+  background:var(--surface);
+  backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--border);
+  border-radius:36px;
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 10px 40px rgba(0,0,0,0.3);
+  z-index:100;
+  padding:8px;
+}
+.nav-indicator{
+  position:absolute;
+  top:8px;bottom:8px;left:0;
+  background:var(--primary-dim);
+  border-radius:28px;
+  z-index:0;
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1), width 0.4s cubic-bezier(0.16,1,0.3,1);
+  pointer-events:none;
+}
+.nav-item{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;height:56px;color:var(--text-sec);cursor:pointer;
+  transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
+  border-radius:28px;z-index:1;
+}
+.nav-item.active{color:var(--primary);}
+.nav-item i{font-size:22px;position:relative;z-index:2;transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);}
+.nav-item.active i{transform:translateY(-8px);filter:drop-shadow(0 2px 5px var(--primary-glow));}
+.nav-item span{
+  position:absolute;bottom:6px;font-size:10px;font-weight:800;letter-spacing:0.5px;
+  opacity:0;transform:translateY(10px);transition:all 0.4s cubic-bezier(0.16,1,0.3,1);z-index:2;
+}
+.nav-item.active span{opacity:1;transform:translateY(0);}
+
+/* ========================================= */
+/*  MODALS & TOASTS                          */
+/* ========================================= */
+.toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:10px;width:calc(100% - 48px);max-width:400px;pointer-events:none;}
+.toast{
+  display:flex;align-items:center;gap:14px;background:var(--surface);backdrop-filter:var(--glass-blur);
+  border:1px solid var(--border);border-radius:16px;padding:16px 20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  animation:toastIn 0.5s cubic-bezier(0.16,1,0.3,1);pointer-events:auto;
+}
+.toast.hiding{animation:toastOut 0.4s ease forwards;}
+.toast-icon{font-size:20px;flex-shrink:0;}
+.toast-icon.success{color:var(--safe);filter:drop-shadow(0 0 5px var(--safe-glow));}
+.toast-icon.error{color:var(--danger);filter:drop-shadow(0 0 5px var(--danger-glow));}
+.toast-icon.info{color:var(--primary);filter:drop-shadow(0 0 5px var(--primary-glow));}
+.toast-msg{font-size:14px;font-weight:700;flex:1;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-30px) scale(0.9);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-20px) scale(0.9);}}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.8);
+  display:none;align-items:center;justify-content:center;z-index:200;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.modal-overlay.active{display:flex;}
+.modal-box{
+  background:var(--bg);border:1px solid var(--border);border-radius:28px;
+  padding:40px 32px;width:calc(100% - 48px);max-width:360px;text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  animation:modalIn 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.9) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-box h3{font-size:20px;font-weight:800;margin-bottom:12px;}
+.modal-box p{font-size:14px;color:var(--text-sec);margin-bottom:24px;font-weight:600;}
+.progress-bar-wrap{width:100%;height:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:12px;box-shadow:inset 0 2px 5px rgba(0,0,0,0.2);}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg, var(--primary), #00d2b8);border-radius:6px;width:0%;transition:width 0.2s ease;box-shadow:0 0 10px var(--primary-glow);}
+
+.modal-result .result-venom{font-size:64px;font-weight:900;line-height:1;margin:16px 0 12px;}
+.modal-close-btn{
+  margin-top:24px;padding:16px 40px;background:var(--primary);color:#fff;
+  border:none;border-radius:16px;font-size:15px;font-weight:800;
+  box-shadow:0 4px 15px var(--primary-glow);cursor:pointer;transition:transform 0.2s ease;
+}
+.modal-close-btn:active{transform:scale(0.94);}
+
+.splash{position:fixed;inset:0;background:transparent;backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;transition:opacity 0.6s ease;}
+.splash.hiding{opacity:0;pointer-events:none;}
+.splash-icon{font-size:64px;color:var(--primary);margin-bottom:20px;filter:drop-shadow(0 0 20px var(--primary-glow));animation:pulseSplash 2s infinite;}
+@keyframes pulseSplash{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+</style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div class="splash" id="splash">
+  <i class="fa-solid fa-microscope splash-icon"></i>
+  <h1 style="font-size:32px;font-weight:900;letter-spacing:1px;"><span style="color:var(--primary)">Venom</span>Sense</h1>
+  <p style="font-size:14px;color:var(--text-sec);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:12px;">Diagnostic System</p>
+</div>
+
+<div class="app-container">
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="brand">
+      <i class="fa-solid fa-microscope"></i>
+      <span><span style="color:var(--primary)">Venom</span>Sense</span>
+    </div>
+    <div class="connection-badge disconnected" id="connBadge">
+      <i class="fa-solid fa-link-slash"></i><span id="connText">Offline</span>
+    </div>
+  </div>
+
+  <!-- PAGE CONTENT -->
+  <div class="page-content">
+    
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="pageDashboard">
+      <div class="gauge-section">
+        <div class="gauge-wrapper">
+          <svg class="gauge-svg" viewBox="0 0 200 200">
+            <circle class="gauge-bg" cx="100" cy="100" r="82" stroke-dasharray="386 516" transform="rotate(135,100,100)"/>
+            <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="82" stroke-dasharray="386 516" stroke-dashoffset="386" transform="rotate(135,100,100)"/>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-value" id="gaugeValue">0%</div>
+            <div class="gauge-label">TOXIN LEVEL</div>
+          </div>
+        </div>
+        <div class="status-badge idle" id="statusBadge">
+          <i class="fa-solid fa-plug" id="statusIcon"></i><span id="statusText">SYSTEM STANDBY</span>
+        </div>
+      </div>
+
+      <button class="deep-scan-btn" id="deepScanBtn" disabled>
+        <i class="fa-solid fa-layer-group"></i><span>Initiate Deep Scan</span>
+      </button>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-label">Phase Angle</div>
+          <div class="info-value" id="infoHue">—</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Toxin Sat.</div>
+          <div class="info-value" id="infoSat">—</div>
+        </div>
+        <div class="info-card full-width">
+          <div class="info-label">Spectral Signature</div>
+          <div class="info-value" id="infoRGB">— / — / —</div>
+          <div class="rgb-bar" id="rgbBar">
+            <span style="background:var(--danger)"></span>
+            <span style="background:var(--safe)"></span>
+            <span style="background:#4361ee"></span>
+          </div>
+        </div>
+        <div class="info-card full-width">
+          <div class="info-label">Optical Density</div>
+          <div class="info-value" id="infoClear">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="pageHistory">
+      <div class="history-header">
+        <h2>Records</h2>
+        <button class="clear-btn" id="clearHistoryBtn"><i class="fa-solid fa-trash-can"></i><span>Clear</span></button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="empty-state" id="emptyHistory">
+          <i class="fa-solid fa-folder-open"></i>
+          <p>No diagnostics found.<br>Records will sync automatically.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="pageSettings">
+      <div class="settings-section">
+        <h2>System Configuration</h2>
+        
+        <div class="setting-group">
+          <div class="setting-item no-border">
+            <div class="setting-left">
+              <i class="fa-solid fa-wifi"></i>
+              <div>
+                <div class="setting-title">Telemetry Node</div>
+                <div class="setting-desc" id="wsAddrDisplay">ws://192.168.4.1:81</div>
+              </div>
+            </div>
+          </div>
+          <div class="custom-input-wrap">
+            <input class="custom-input" id="wsInput" type="text" placeholder="ws://..." value="ws://192.168.4.1:81">
+            <button class="action-btn primary" id="connectBtn" onclick="toggleConnection()">Connect</button>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <div class="setting-item">
+            <div class="setting-left">
+              <i class="fa-solid fa-rotate"></i>
+              <div><div class="setting-title">Auto-Reconnect</div><div class="setting-desc">Recover dropped signals</div></div>
+            </div>
+            <div class="custom-toggle active" id="autoConnToggle" onclick="toggleAutoConnect()"></div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-left">
+              <i class="fa-solid fa-vial-circle-check"></i>
+              <div><div class="setting-title">Simulation Mode</div><div class="setting-desc">Generate synthetic data</div></div>
+            </div>
+            <div class="custom-toggle" id="demoToggle" onclick="toggleDemo()"></div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-left">
+              <i class="fa-solid fa-circle-half-stroke"></i>
+              <div><div class="setting-title">Light Interface</div><div class="setting-desc">High visibility mode</div></div>
+            </div>
+            <div class="custom-toggle" id="themeToggle" onclick="toggleTheme()"></div>
+          </div>
+        </div>
+
+        <div class="device-info" id="deviceInfo" style="display:none">
+          <div class="device-info-row"><span>Hardware ID</span><span id="diDevice">—</span></div>
+          <div class="device-info-row"><span>Link Status</span><span id="diStatus" style="color:var(--safe)">Active</span></div>
+          <div class="device-info-row"><span>Active Nodes</span><span id="diClients">—</span></div>
+          <div class="device-info-row"><span>Port</span><span id="diPort">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-indicator" id="navIndicator"></div>
+    <div class="nav-item active" data-page="pageDashboard">
+      <i class="fa-solid fa-house-medical"></i><span>Monitor</span>
+    </div>
+    <div class="nav-item" data-page="pageHistory">
+      <i class="fa-solid fa-file-medical"></i><span>Records</span>
+    </div>
+    <div class="nav-item" data-page="pageSettings">
+      <i class="fa-solid fa-sliders"></i><span>System</span>
+    </div>
+  </nav>
+</div>
+
+<!-- TOAST & MODAL (Keep structure but update classes) -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="modal-overlay" id="deepScanModal">
+  <div class="modal-box glass-panel">
+    <div id="modalScanning">
+      <i class="fa-solid fa-layer-group" style="font-size:48px;color:var(--primary);margin-bottom:20px;filter:drop-shadow(0 0 10px var(--primary-glow));"></i>
+      <h3>Deep Diagnostic</h3>
+      <p>Averaging multipoint spectral data...</p>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="modalProgress"></div></div>
+      <div style="font-size:13px;font-weight:700;color:var(--text-sec)" id="modalProgressText">0%</div>
+    </div>
+    <div class="modal-result" id="modalResult">
+      <i class="fa-solid fa-check-circle" id="modalResultIcon" style="font-size:48px;margin-bottom:10px;"></i>
+      <h3>Diagnostic Complete</h3>
+      <div class="result-venom" id="modalResultVenom">0%</div>
+      <div style="font-size:12px;color:var(--text-sec);font-weight:600;" id="modalResultMeta"></div>
+      <button class="modal-close-btn" onclick="closeDeepScanModal()">Acknowledge</button>
+    </div>
+  </div>
+</div>
+<script>
+// =============================================
+//  VenomSense — Companion Web App
+// =============================================
+
+// --- State ---
+let ws = null;
+let isConnected = false;
+let demoMode = false;
+let demoInterval = null;
+let autoConnect = true;
+let reconnectTimer = null;
+let isLightTheme = false;
+let scanHistory = [];
+
+// --- Persistence ---
+try {
+  const s = JSON.parse(localStorage.getItem('vs_settings'));
+  if (s) {
+    if (s.isLightTheme !== undefined) isLightTheme = s.isLightTheme;
+    if (s.autoConnect !== undefined) autoConnect = s.autoConnect;
+    if (s.wsUrl) document.getElementById('wsInput').value = s.wsUrl;
+  }
+} catch(e) {}
+
+try {
+  const h = JSON.parse(localStorage.getItem('vs_history'));
+  if (h && Array.isArray(h)) {
+    scanHistory = h.map(entry => ({...entry, time: new Date(entry.time)}));
+  }
+} catch(e) {}
+
+function saveSettings() {
+  localStorage.setItem('vs_settings', JSON.stringify({
+    isLightTheme: isLightTheme,
+    autoConnect: autoConnect,
+    wsUrl: document.getElementById('wsInput').value
+  }));
+}
+function saveHistory() {
+  localStorage.setItem('vs_history', JSON.stringify(scanHistory));
+}
+
+// --- DOM References ---
+const $ = id => document.getElementById(id);
+const connBadge     = $('connBadge');
+const connText      = $('connText');
+const gaugeValue    = $('gaugeValue');
+const gaugeFill     = $('gaugeFill');
+const statusBadge   = $('statusBadge');
+const statusIcon    = $('statusIcon');
+const statusText    = $('statusText');
+const deepScanBtn   = $('deepScanBtn');
+const infoHue       = $('infoHue');
+const infoSat       = $('infoSat');
+const infoRGB       = $('infoRGB');
+const rgbBar        = $('rgbBar');
+const infoClear     = $('infoClear');
+const historyList   = $('historyList');
+const emptyHistory  = $('emptyHistory');
+const wsInput       = $('wsInput');
+const connectBtn    = $('connectBtn');
+const demoToggle    = $('demoToggle');
+const themeToggle   = $('themeToggle');
+const autoConnToggle = $('autoConnToggle');
+
+// --- Constants ---
+const ARC_LENGTH = 386; // 270-degree arc of r=82
+
+// =============================================
+//  SPLASH SCREEN
+// =============================================
+setTimeout(() => {
+  const splash = $('splash');
+  splash.classList.add('hiding');
+  setTimeout(() => splash.style.display = 'none', 500);
+}, 1800);
+
+// =============================================
+//  NAVIGATION
+// =============================================
+let currentNavIndex = 0;
+const navItems = Array.from(document.querySelectorAll('.nav-item'));
+const navIndicator = $('navIndicator');
+
+function updateIndicator(item) {
+  if(!item || !navIndicator) return;
+  const itemRect = item.getBoundingClientRect();
+  const navRect = item.parentElement.getBoundingClientRect();
+  navIndicator.style.width = (itemRect.width - 10) + 'px';
+  navIndicator.style.transform = `translateX(${itemRect.left - navRect.left + 5}px)`;
+}
+
+navItems.forEach((item, index) => {
+  item.addEventListener('click', () => {
+    if (currentNavIndex === index) return;
+    const isForward = index > currentNavIndex;
+    currentNavIndex = index;
+
+    navItems.forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    updateIndicator(item);
+
+    document.querySelectorAll('.page').forEach(p => {
+      p.classList.remove('active', 'slide-left', 'slide-right');
+    });
+    
+    const targetPage = $(item.dataset.page);
+    targetPage.classList.add('active');
+    targetPage.classList.add(isForward ? 'slide-left' : 'slide-right');
+  });
+});
+
+window.addEventListener('load', () => {
+  document.body.classList.toggle('light-theme', isLightTheme);
+  themeToggle.classList.toggle('active', isLightTheme);
+  autoConnToggle.classList.toggle('active', autoConnect);
+  renderHistory();
+  setTimeout(() => updateIndicator(document.querySelector('.nav-item.active')), 100);
+});
+window.addEventListener('resize', () => updateIndicator(document.querySelector('.nav-item.active')));
+
+// =============================================
+//  WEBSOCKET CONNECTION
+// =============================================
+function toggleConnection() {
+  if (isConnected) {
+    autoConnect = false; // Disable auto-connect if manually disconnected
+    autoConnToggle.classList.remove('active');
+    disconnect();
+  } else {
+    connect();
+  }
+}
+
+function connect() {
+  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) return;
+  
+  const url = wsInput.value.trim();
+  if (!url) { showToast('Enter a WebSocket address', 'warn'); return; }
+  saveSettings();
+
+  try {
+    ws = new WebSocket(url);
+  } catch (e) {
+    if(!autoConnect) showToast('Invalid WebSocket URL', 'error');
+    handleReconnect();
+    return;
+  }
+
+  if(!autoConnect || !reconnectTimer) showToast('Connecting to device...', 'info');
+
+  ws.onopen = () => {
+    isConnected = true;
+    if(reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    updateConnectionUI(true);
+    showToast('Connected to VenomSense', 'success');
+    $('wsAddrDisplay').textContent = url;
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      handleDeviceData(data);
+    } catch (e) {
+      console.error('Parse error:', e);
+    }
+  };
+
+  ws.onclose = () => {
+    if (isConnected) showToast('Device disconnected', 'error');
+    isConnected = false;
+    updateConnectionUI(false);
+    ws = null;
+    handleReconnect();
+  };
+
+  ws.onerror = () => {
+    if(!autoConnect && !reconnectTimer) showToast('Connection failed', 'error');
+    isConnected = false;
+    updateConnectionUI(false);
+    ws = null;
+    handleReconnect();
+  };
+}
+
+function disconnect() {
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if (ws) {
+    ws.onclose = null; // Prevent reconnect trigger
+    ws.onerror = null;
+    ws.close();
+    ws = null;
+  }
+  isConnected = false;
+  updateConnectionUI(false);
+  showToast('Disconnected', 'info');
+}
+
+function handleReconnect() {
+  if (autoConnect && !demoMode && !isConnected) {
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => {
+      connect();
+    }, 3000);
+  }
+}
+
+function toggleAutoConnect() {
+  autoConnect = !autoConnect;
+  autoConnToggle.classList.toggle('active', autoConnect);
+  saveSettings();
+  if (autoConnect && !isConnected && !demoMode) connect();
+}
+
+function toggleTheme() {
+  isLightTheme = !isLightTheme;
+  themeToggle.classList.toggle('active', isLightTheme);
+  document.body.classList.toggle('light-theme', isLightTheme);
+  saveSettings();
+}
+
+// Initial auto-connect
+setTimeout(() => { if(autoConnect && !demoMode) connect(); }, 2000);
+
+
+function updateConnectionUI(connected) {
+  if (connected) {
+    connBadge.className = 'connection-badge connected';
+    connBadge.innerHTML = '<i class="fa-solid fa-link"></i><span>Connected</span>';
+    connectBtn.textContent = 'Disconnect';
+    connectBtn.className = 'action-btn danger';
+    deepScanBtn.disabled = false;
+    $('deviceInfoDesc').textContent = 'Connected';
+    $('deviceInfo').style.display = 'block';
+    $('diDevice').textContent = 'VenomSense';
+    $('diStatus').textContent = 'Active';
+    $('diPort').textContent = '81';
+  } else {
+    connBadge.className = 'connection-badge disconnected';
+    connBadge.innerHTML = '<i class="fa-solid fa-link-slash"></i><span>Disconnected</span>';
+    connectBtn.textContent = 'Connect';
+    connectBtn.className = 'action-btn primary';
+    if (!demoMode) deepScanBtn.disabled = true;
+    $('deviceInfoDesc').textContent = 'Not connected';
+    $('deviceInfo').style.display = 'none';
+    updateStatusBadge('idle', 'NO DEVICE', 'fa-plug');
+  }
+}
+
+// =============================================
+//  DATA HANDLING
+// =============================================
+function handleDeviceData(data) {
+  switch (data.type) {
+    case 'connected':
+      $('diDevice').textContent = data.device || 'VenomSense';
+      break;
+
+    case 'scan':
+      updateDashboard(data);
+      break;
+
+    case 'deepScanStarted':
+      openDeepScanModal();
+      break;
+
+    case 'deepScanProgress':
+      updateDeepScanProgress(data.progress);
+      break;
+
+    case 'deepScanResult':
+      showDeepScanResult(data);
+      updateDashboard(data);
+      addToHistory(data);
+      break;
+  }
+
+  // Add all normal scans to history (throttled) so users see real-time simulated data
+  if (data.type === 'scan') {
+    throttleAddHistory(data);
+  }
+}
+
+let lastHistoryAdd = 0;
+function throttleAddHistory(data) {
+  const now = Date.now();
+  if (now - lastHistoryAdd > 3000) { // Max one entry every 3 seconds
+    addToHistory(data);
+    lastHistoryAdd = now;
+  }
+}
+
+function updateDashboard(data) {
+  const venom = data.venom || 0;
+  const status = data.status || 'safe';
+
+  // Gauge
+  const offset = ARC_LENGTH - (ARC_LENGTH * Math.min(venom, 100) / 100);
+  gaugeFill.style.strokeDashoffset = offset;
+  gaugeValue.textContent = venom + '%';
+
+  // Gauge color
+  if (status === 'danger') {
+    gaugeFill.style.stroke = 'var(--danger)';
+    gaugeValue.style.color = 'var(--danger)';
+  } else if (status === 'no_cartridge') {
+    gaugeFill.style.stroke = 'var(--warning)';
+    gaugeValue.style.color = 'var(--warning)';
+  } else {
+    gaugeFill.style.stroke = 'var(--safe)';
+    gaugeValue.style.color = 'var(--safe)';
+  }
+
+  // Status badge
+  if (status === 'no_cartridge') {
+    updateStatusBadge('warning', 'INSERT CARTRIDGE', 'fa-triangle-exclamation');
+  } else if (status === 'danger') {
+    updateStatusBadge('danger', venom >= 50 ? 'HIGH TOXIN (BOLD)' : 'LOW TOXIN (FADED)', 'fa-biohazard');
+  } else {
+    updateStatusBadge('safe', 'SAFE — NO TOXIN', 'fa-shield');
+  }
+
+  // Info cards
+  if (data.hue !== undefined) infoHue.textContent = parseFloat(data.hue).toFixed(1) + '°';
+  if (data.saturation !== undefined) infoSat.textContent = (parseFloat(data.saturation) * 100).toFixed(1) + '%';
+  if (data.raw) {
+    infoRGB.textContent = data.raw.r + ' / ' + data.raw.g + ' / ' + data.raw.b;
+    infoClear.textContent = data.raw.c + ' lx';
+    updateRGBBar(data.raw.r, data.raw.g, data.raw.b);
+  }
+
+  // Update client count
+  if (isConnected) $('diClients').textContent = '1+';
+}
+
+function updateStatusBadge(type, text, icon) {
+  statusBadge.className = 'status-badge ' + type;
+  statusIcon.className = 'fa-solid ' + icon;
+  statusText.textContent = text;
+}
+
+function updateRGBBar(r, g, b) {
+  const total = r + g + b || 1;
+  const bars = rgbBar.children;
+  bars[0].style.flex = r / total;
+  bars[1].style.flex = g / total;
+  bars[2].style.flex = b / total;
+}
+
+// =============================================
+//  DEEP SCAN
+// =============================================
+deepScanBtn.addEventListener('click', () => {
+  if (demoMode) {
+    triggerDemoDeepScan();
+    return;
+  }
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send('deepScan');
+  } else {
+    showToast('Not connected to device', 'error');
+  }
+});
+
+function openDeepScanModal() {
+  const modal = $('deepScanModal');
+  $('modalScanning').style.display = 'block';
+  $('modalResult').style.display = 'none';
+  $('modalProgress').style.width = '0%';
+  $('modalProgressText').textContent = '0%';
+  modal.classList.add('active');
+  deepScanBtn.disabled = true;
+}
+
+function updateDeepScanProgress(progress) {
+  $('modalProgress').style.width = progress + '%';
+  $('modalProgressText').textContent = progress + '%';
+}
+
+function showDeepScanResult(data) {
+  $('modalScanning').style.display = 'none';
+  $('modalResult').style.display = 'block';
+
+  const venom = data.venom || 0;
+  const resultVenom = $('modalResultVenom');
+  resultVenom.textContent = venom + '%';
+  resultVenom.className = 'result-venom ' + (venom > 10 ? 'danger-text' : 'safe-text');
+
+  const icon = $('modalResultIcon');
+  if (venom > 10) {
+    icon.className = 'fa-solid fa-triangle-exclamation';
+    icon.style.color = 'var(--danger)';
+  } else {
+    icon.className = 'fa-solid fa-check-circle';
+    icon.style.color = 'var(--safe)';
+  }
+
+  const readings = data.readings || '—';
+  $('modalResultMeta').textContent = readings + ' samples averaged | ' + formatTime(new Date());
+}
+
+function closeDeepScanModal() {
+  $('deepScanModal').classList.remove('active');
+  deepScanBtn.disabled = false;
+}
+
+// =============================================
+//  SCAN HISTORY
+// =============================================
+function addToHistory(data) {
+  const entry = {
+    venom: data.venom || 0,
+    status: data.status || 'safe',
+    isDeepScan: data.isDeepScan || false,
+    time: new Date(),
+    readings: data.readings || 0
+  };
+  scanHistory.unshift(entry);
+  if (scanHistory.length > 50) scanHistory.pop(); // Keep last 50
+  renderHistory();
+  saveHistory();
+}
+
+function renderHistory() {
+  if (scanHistory.length === 0) {
+    emptyHistory.style.display = 'flex';
+    // Remove all scan entries but keep empty state
+    historyList.querySelectorAll('.scan-entry').forEach(e => e.remove());
+    return;
+  }
+  emptyHistory.style.display = 'none';
+
+  // Clear existing entries
+  historyList.querySelectorAll('.scan-entry').forEach(e => e.remove());
+
+  scanHistory.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'scan-entry';
+
+    let iconClass, iconBg, label;
+    if (entry.isDeepScan) {
+      iconClass = 'fa-microscope'; iconBg = 'deep-icon'; label = 'Deep Scan';
+    } else if (entry.status === 'danger') {
+      iconClass = 'fa-biohazard'; iconBg = 'danger-icon'; label = 'Danger Detected';
+    } else {
+      iconClass = 'fa-shield'; iconBg = 'safe-icon'; label = 'Safe Reading';
+    }
+
+    const textColor = entry.venom > 10 ? 'danger-text' : 'safe-text';
+
+    el.innerHTML = `
+      <div class="entry-icon ${iconBg}"><i class="fa-solid ${iconClass}"></i></div>
+      <div class="entry-body">
+        <div class="entry-title">${label}</div>
+        <div class="entry-sub">${formatTime(entry.time)}${entry.isDeepScan ? ' · ' + entry.readings + ' samples' : ''}</div>
+      </div>
+      <div class="entry-percent ${textColor}">${entry.venom}%</div>
+    `;
+    historyList.appendChild(el);
+  });
+}
+
+$('clearHistoryBtn').addEventListener('click', () => {
+  if (scanHistory.length === 0) return;
+  scanHistory = [];
+  renderHistory();
+  saveHistory();
+  showToast('History cleared', 'info');
+});
+
+// =============================================
+//  DEMO MODE
+// =============================================
+function toggleDemo() {
+  demoMode = !demoMode;
+  demoToggle.classList.toggle('active', demoMode);
+
+  if (demoMode) {
+    showToast('Demo mode enabled', 'info');
+    deepScanBtn.disabled = false;
+    updateConnectionUI(false);
+    connBadge.className = 'connection-badge connected';
+    connBadge.innerHTML = '<i class="fa-solid fa-flask-vial"></i><span>Demo Mode</span>';
+    startDemo();
+  } else {
+    showToast('Demo mode disabled', 'info');
+    stopDemo();
+    if (!isConnected) {
+      deepScanBtn.disabled = true;
+      updateConnectionUI(false);
+    }
+  }
+}
+
+function startDemo() {
+  stopDemo();
+  const generateData = () => {
+    const scenarios = ['safe', 'danger_low', 'danger_high', 'no_cartridge'];
+    const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+
+    let data;
+    switch (scenario) {
+      case 'safe':
+        data = { type: 'scan', venom: Math.floor(Math.random() * 8), status: 'safe',
+          hue: 120 + Math.random() * 100, saturation: Math.random() * 0.1,
+          raw: { r: 200 + ~~(Math.random()*100), g: 800 + ~~(Math.random()*200), b: 300 + ~~(Math.random()*100), c: 1500 + ~~(Math.random()*500) }};
+        break;
+      case 'danger_low':
+        data = { type: 'scan', venom: 15 + Math.floor(Math.random() * 30), status: 'danger',
+          hue: Math.random() * 25, saturation: 0.15 + Math.random() * 0.3,
+          raw: { r: 900 + ~~(Math.random()*300), g: 300 + ~~(Math.random()*150), b: 250 + ~~(Math.random()*100), c: 1800 + ~~(Math.random()*400) }};
+        break;
+      case 'danger_high':
+        data = { type: 'scan', venom: 55 + Math.floor(Math.random() * 40), status: 'danger',
+          hue: Math.random() * 20, saturation: 0.55 + Math.random() * 0.4,
+          raw: { r: 1400 + ~~(Math.random()*400), g: 200 + ~~(Math.random()*100), b: 180 + ~~(Math.random()*80), c: 2200 + ~~(Math.random()*600) }};
+        break;
+      case 'no_cartridge':
+        data = { type: 'scan', venom: 0, status: 'no_cartridge' };
+        break;
+    }
+    handleDeviceData(data);
+  };
+  generateData();
+  demoInterval = setInterval(generateData, 800);
+}
+
+function stopDemo() {
+  if (demoInterval) {
+    clearInterval(demoInterval);
+    demoInterval = null;
+  }
+}
+
+function triggerDemoDeepScan() {
+  openDeepScanModal();
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 5;
+    updateDeepScanProgress(Math.min(progress, 100));
+    if (progress >= 100) {
+      clearInterval(interval);
+      const venom = 20 + Math.floor(Math.random() * 70);
+      const result = {
+        type: 'deepScanResult', venom: venom,
+        status: venom > 10 ? 'danger' : 'safe',
+        isDeepScan: true, readings: 12 + Math.floor(Math.random() * 8),
+        hue: Math.random() * 25, saturation: venom / 100,
+        raw: { r: 1000 + ~~(Math.random()*500), g: 300 + ~~(Math.random()*200), b: 250 + ~~(Math.random()*150), c: 2000 + ~~(Math.random()*500) }
+      };
+      showDeepScanResult(result);
+      updateDashboard(result);
+      addToHistory(result);
+    }
+  }, 100);
+}
+
+// =============================================
+//  TOAST SYSTEM
+// =============================================
+function showToast(message, type) {
+  const container = $('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+
+  const icons = { success: 'fa-check-circle', error: 'fa-circle-xmark', info: 'fa-circle-info', warn: 'fa-triangle-exclamation' };
+
+  toast.innerHTML = `
+    <i class="fa-solid ${icons[type] || icons.info} toast-icon ${type}"></i>
+    <span class="toast-msg">${message}</span>
+    <i class="fa-solid fa-xmark toast-close"></i>
+  `;
+
+  toast.querySelector('.toast-close').addEventListener('click', () => removeToast(toast));
+  container.appendChild(toast);
+
+  setTimeout(() => removeToast(toast), 3500);
+}
+
+function removeToast(toast) {
+  if (!toast.parentNode) return;
+  toast.classList.add('hiding');
+  setTimeout(() => toast.remove(), 300);
+}
+
+// =============================================
+//  UTILITIES
+// =============================================
+function formatTime(date) {
+  const h = date.getHours();
+  const m = String(date.getMinutes()).padStart(2, '0');
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 || 12;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return h12 + ':' + m + ampm + ' ' + date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear();
+}
+</script>
+</body>
+</html>
