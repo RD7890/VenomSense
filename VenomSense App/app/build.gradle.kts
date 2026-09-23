@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.venomsense.app"
+    namespace = "com.ryzixstudios.venomsense"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.venomsense.app"
+        applicationId = "com.ryzixstudios.venomsense"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

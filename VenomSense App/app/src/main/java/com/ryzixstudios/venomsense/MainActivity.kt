@@ -1,4 +1,4 @@
-package com.venomsense.app
+package com.ryzixstudios.venomsense
 
 import android.annotation.SuppressLint
 import android.os.Bundle
