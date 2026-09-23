@@ -1,0 +1,53 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+android {
+    namespace = "com.venomsense.app"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.venomsense.app"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    signingConfigs {
+        create("release") {
+            val props = java.util.Properties()
+            val propsFile = rootProject.file("local.properties")
+            if (propsFile.exists()) {
+                props.load(java.io.FileInputStream(propsFile))
+                storeFile = file(props.getProperty("signing.storeFile", "signing-key.jks"))
+                storePassword = props.getProperty("signing.storePassword")
+                keyAlias = props.getProperty("signing.keyAlias")
+                keyPassword = props.getProperty("signing.keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.10.0")
+    implementation("androidx.webkit:webkit:1.8.0")
+}

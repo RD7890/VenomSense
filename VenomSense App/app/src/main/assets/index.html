@@ -52,8 +52,8 @@ body{
 }
 
 .light-theme{
-  --bg:#f4f7f9;
-  --surface:rgba(255, 255, 255, 0.7);
+  --bg:#ffffff;
+  --surface:rgba(248, 250, 252, 0.7);
   --surface-alt:rgba(0, 0, 0, 0.02);
   --border:rgba(0, 0, 0, 0.08);
   --border-light:rgba(0, 0, 0, 0.15);
@@ -62,6 +62,15 @@ body{
   --text-dim:#94a3b8;
   --primary-glow:rgba(0, 169, 150, 0.15);
   --shadow:0 8px 32px rgba(0,0,0,0.05);
+  --safe:#059669; /* Darker green for white background visibility */
+}
+body.light-theme {
+  background-image: none;
+}
+.light-theme .gauge-value,
+.light-theme .safe-text,
+.light-theme .danger-text {
+  text-shadow: none;
 }
 
 /* ========================================= */
@@ -69,13 +78,13 @@ body{
 /* ========================================= */
 .app-container{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 .page-content{flex:1;overflow-y:auto;padding-bottom:180px;-webkit-overflow-scrolling:touch;}
-.page{display:none;}
-.page.active{display:block;animation:pageIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);}
-.page.active.slide-left{animation:slideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1);}
-.page.active.slide-right{animation:slideRight 0.5s cubic-bezier(0.16, 1, 0.3, 1);}
-@keyframes pageIn{from{opacity:0;transform:scale(0.98) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
-@keyframes slideLeft{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
-@keyframes slideRight{from{opacity:0;transform:translateX(-40px);}to{opacity:1;transform:translateX(0);}}
+.page{display:none;will-change:transform, opacity;}
+.page.active{display:block;animation:pageIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);}
+.page.active.slide-left{animation:slideLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1);}
+.page.active.slide-right{animation:slideRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);}
+@keyframes pageIn{from{opacity:0;transform:scale(0.98) translateY(15px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(50px);}to{opacity:1;transform:translateX(0);}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-50px);}to{opacity:1;transform:translateX(0);}}
 
 .glass-panel {
   background:var(--surface);
@@ -92,7 +101,7 @@ body{
 .top-bar{
   display:flex;align-items:center;justify-content:space-between;
   padding:16px 24px;
-  background:transparent;
+  background:var(--surface);
   position:sticky;top:0;z-index:50;
   backdrop-filter:var(--glass-blur);
   -webkit-backdrop-filter:var(--glass-blur);
@@ -206,7 +215,7 @@ body{
 }
 .clear-btn:active{background:var(--danger-dim);color:var(--danger);border-color:var(--danger-glow);}
 
-.history-list{padding:0 24px 24px;}
+.history-list{padding:24px;}
 .scan-entry{
   display:flex;align-items:center;gap:16px;
   background:var(--surface-alt);border:1px solid var(--border);
@@ -384,6 +393,13 @@ body{
 </style>
 </head>
 <body>
+<!-- Theme Pre-load to prevent flash -->
+<script>
+  try {
+    const s = JSON.parse(localStorage.getItem('vs_settings'));
+    if (s && s.isLightTheme) { document.body.classList.add('light-theme'); }
+  } catch(e){}
+</script>
 
 <!-- SPLASH SCREEN -->
 <div class="splash" id="splash">
@@ -393,22 +409,22 @@ body{
 </div>
 
 <div class="app-container">
-  <!-- TOP BAR -->
-  <div class="top-bar">
-    <div class="brand">
-      <i class="fa-solid fa-microscope"></i>
-      <span><span style="color:var(--primary)">Venom</span>Sense</span>
-    </div>
-    <div class="connection-badge disconnected" id="connBadge">
-      <i class="fa-solid fa-link-slash"></i><span id="connText">Offline</span>
-    </div>
-  </div>
-
   <!-- PAGE CONTENT -->
   <div class="page-content">
     
     <!-- DASHBOARD PAGE -->
     <div class="page active" id="pageDashboard">
+      <!-- TOP BAR -->
+      <div class="top-bar">
+        <div class="brand">
+          <i class="fa-solid fa-microscope"></i>
+          <span><span style="color:var(--primary)">Venom</span>Sense</span>
+        </div>
+        <div class="connection-badge disconnected" id="connBadge">
+          <i class="fa-solid fa-link-slash"></i><span id="connText">Offline</span>
+        </div>
+      </div>
+
       <div class="gauge-section">
         <div class="gauge-wrapper">
           <svg class="gauge-svg" viewBox="0 0 200 200">
@@ -456,8 +472,11 @@ body{
 
     <!-- HISTORY PAGE -->
     <div class="page" id="pageHistory">
-      <div class="history-header">
-        <h2>Records</h2>
+      <div class="top-bar">
+        <div class="brand">
+          <i class="fa-solid fa-file-medical"></i>
+          <span>Records</span>
+        </div>
         <button class="clear-btn" id="clearHistoryBtn"><i class="fa-solid fa-trash-can"></i><span>Clear</span></button>
       </div>
       <div class="history-list" id="historyList">
@@ -470,8 +489,13 @@ body{
 
     <!-- SETTINGS PAGE -->
     <div class="page" id="pageSettings">
+      <div class="top-bar">
+        <div class="brand">
+          <i class="fa-solid fa-sliders"></i>
+          <span>System Configuration</span>
+        </div>
+      </div>
       <div class="settings-section">
-        <h2>System Configuration</h2>
         
         <div class="setting-group">
           <div class="setting-item no-border">
@@ -540,6 +564,19 @@ body{
 
 <!-- TOAST & MODAL (Keep structure but update classes) -->
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- CONFIRM CLEAR MODAL -->
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box glass-panel">
+    <i class="fa-solid fa-triangle-exclamation" style="font-size:48px;color:var(--danger);margin-bottom:20px;filter:drop-shadow(0 0 10px var(--danger-glow));"></i>
+    <h3 style="color:var(--danger)">Clear Records?</h3>
+    <p>This will permanently delete all diagnostic history. This action cannot be undone.</p>
+    <div style="display:flex;gap:12px;">
+      <button class="action-btn" id="cancelClearBtn" style="flex:1;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);">Cancel</button>
+      <button class="action-btn" id="confirmClearBtn" style="flex:1;background:var(--danger);color:#fff;border:none;">Delete</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="deepScanModal">
   <div class="modal-box glass-panel">
@@ -1024,6 +1061,15 @@ function renderHistory() {
 
 $('clearHistoryBtn').addEventListener('click', () => {
   if (scanHistory.length === 0) return;
+  $('clearModal').classList.add('active');
+});
+
+$('cancelClearBtn').addEventListener('click', () => {
+  $('clearModal').classList.remove('active');
+});
+
+$('confirmClearBtn').addEventListener('click', () => {
+  $('clearModal').classList.remove('active');
   scanHistory = [];
   renderHistory();
   saveHistory();
