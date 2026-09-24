@@ -1,0 +1,1 @@
+-keep class com.ryzixstudios.venomsense.network.SensorData { *; }
