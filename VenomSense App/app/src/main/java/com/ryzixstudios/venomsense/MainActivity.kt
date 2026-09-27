@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         val titleView = TextView(this)
         titleView.text = Html.fromHtml("<font color='#00A996'>Venom</font><font color='#0f172a'>Sense</font>", Html.FROM_HTML_MODE_LEGACY)
         titleView.textSize = 32f
-        titleView.setTypeface(null, Typeface.BOLD)
+        titleView.typeface = Typeface.create("sans-serif-black", Typeface.NORMAL)
         titleView.letterSpacing = 0.05f
         titleView.gravity = Gravity.CENTER
         

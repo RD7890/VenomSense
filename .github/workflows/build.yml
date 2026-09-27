@@ -56,7 +56,7 @@ jobs:
         run: |
           cd "VenomSense App"
           BUILD=${{ github.run_number }}
-          VER_NAME="1.0"
+          VER_NAME="1.0.${BUILD}"
           sed -i "s/versionCode = [0-9]*/versionCode = ${BUILD}/" app/build.gradle.kts
           sed -i "s/versionName = \"[^\"]*\"/versionName = \"${VER_NAME}\"/" app/build.gradle.kts
       - name: Assemble Release APK
@@ -76,9 +76,9 @@ jobs:
           VER="${{ steps.version.outputs.name }}"
           OUTDIR="app/build/outputs/apk/release"
           declare -A ABI_LABELS=( ["universal"]="universal-all-devices" ["armeabi-v7a"]="armv7-watch-32bit" ["arm64-v8a"]="arm64-phone-64bit" ["x86_64"]="x86_64-emulator" )
-          # Just rename the generic app-release.apk if splits aren't enabled
+          VER_DASH=$(echo "$VER" | tr '.' '-')
           if [ -f "$OUTDIR/app-release.apk" ]; then
-            mv "$OUTDIR/app-release.apk" "$OUTDIR/VenomSense-${VER}-universal.apk"
+            mv "$OUTDIR/app-release.apk" "$OUTDIR/VenomSense-v${VER_DASH}.apk"
           fi
           for ABI in "${!ABI_LABELS[@]}"; do
             SRC="$OUTDIR/app-${ABI}-release.apk"

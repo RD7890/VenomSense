@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.VenomSense" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.VenomSense" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">#00A996</item>
         <item name="colorPrimaryDark">#00796B</item>
         <item name="colorAccent">#00A996</item>
@@ -7,9 +7,9 @@
     <style name="Theme.VenomSense.NoActionBar" parent="Theme.VenomSense">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:statusBarColor">#0F172A</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowBackground">@color/splash_background</item>
-        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:windowSplashScreenBackground">#FFFFFF</item>
     </style>
 </resources>
