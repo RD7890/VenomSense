@@ -64,6 +64,9 @@ class MainActivity : AppCompatActivity() {
         settings.allowFileAccess = true
         settings.allowContentAccess = true
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        settings.textZoom = 100
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")
 
         // 1:1 Native Splash Screen Overlay
