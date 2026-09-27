@@ -392,21 +392,7 @@ body.light-theme {
 @keyframes pulseSplash{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
 </style>
 </head>
-<body>
-<!-- Theme Pre-load to prevent flash -->
-<script>
-  try {
-    const s = JSON.parse(localStorage.getItem('vs_settings'));
-    if (s && s.isLightTheme) { document.body.classList.add('light-theme'); }
-  } catch(e){}
-</script>
-
-<!-- SPLASH SCREEN -->
-<div class="splash" id="splash">
-  <i class="fa-solid fa-microscope splash-icon"></i>
-  <h1 style="font-size:32px;font-weight:900;letter-spacing:1px;"><span style="color:var(--primary)">Venom</span>Sense</h1>
-  <p style="font-size:14px;color:var(--text-sec);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:12px;">Diagnostic System</p>
-</div>
+<body class="light-theme">
 
 <div class="app-container">
   <!-- PAGE CONTENT -->
@@ -528,13 +514,7 @@ body.light-theme {
             </div>
             <div class="custom-toggle" id="demoToggle" onclick="toggleDemo()"></div>
           </div>
-          <div class="setting-item">
-            <div class="setting-left">
-              <i class="fa-solid fa-circle-half-stroke"></i>
-              <div><div class="setting-title">Light Interface</div><div class="setting-desc">High visibility mode</div></div>
-            </div>
-            <div class="custom-toggle" id="themeToggle" onclick="toggleTheme()"></div>
-          </div>
+
         </div>
 
         <div class="device-info" id="deviceInfo" style="display:none">
@@ -608,7 +588,7 @@ let demoMode = false;
 let demoInterval = null;
 let autoConnect = true;
 let reconnectTimer = null;
-let isLightTheme = false;
+let isLightTheme = true;
 let scanHistory = [];
 
 // --- Persistence ---
@@ -659,20 +639,13 @@ const emptyHistory  = $('emptyHistory');
 const wsInput       = $('wsInput');
 const connectBtn    = $('connectBtn');
 const demoToggle    = $('demoToggle');
-const themeToggle   = $('themeToggle');
+
 const autoConnToggle = $('autoConnToggle');
 
 // --- Constants ---
 const ARC_LENGTH = 386; // 270-degree arc of r=82
 
-// =============================================
-//  SPLASH SCREEN
-// =============================================
-setTimeout(() => {
-  const splash = $('splash');
-  splash.classList.add('hiding');
-  setTimeout(() => splash.style.display = 'none', 500);
-}, 1800);
+
 
 // =============================================
 //  NAVIGATION
@@ -711,7 +684,7 @@ navItems.forEach((item, index) => {
 
 window.addEventListener('load', () => {
   document.body.classList.toggle('light-theme', isLightTheme);
-  themeToggle.classList.toggle('active', isLightTheme);
+  
   autoConnToggle.classList.toggle('active', autoConnect);
   renderHistory();
   setTimeout(() => updateIndicator(document.querySelector('.nav-item.active')), 100);
@@ -813,7 +786,7 @@ function toggleAutoConnect() {
 
 function toggleTheme() {
   isLightTheme = !isLightTheme;
-  themeToggle.classList.toggle('active', isLightTheme);
+  
   document.body.classList.toggle('light-theme', isLightTheme);
   saveSettings();
 }
